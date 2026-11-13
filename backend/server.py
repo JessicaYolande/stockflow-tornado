@@ -10,7 +10,6 @@ import tornado.web
 CHEMIN_BD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stockflow.db")
 
 
-# ==================== Base de données ====================
 def connexion():
     """Ouvre une connexion à la base de données."""
     bd = sqlite3.connect(CHEMIN_BD)
@@ -46,7 +45,6 @@ def creer_tables():
     bd.close()
 
 
-# ==================== Outils ====================
 class BaseHandler(tornado.web.RequestHandler):
     """Fonctions communes à toutes les routes."""
 
@@ -74,7 +72,6 @@ def trouver_produit(bd, id_produit):
     return dict(ligne)
 
 
-# ==================== Produits ====================
 class ProduitsHandler(BaseHandler):
     def get(self):
         bd = connexion()
@@ -158,7 +155,6 @@ class ProduitHandler(BaseHandler):
         self.envoyer_json({"detail": "Produit supprimé"})
 
 
-# ==================== Mouvements ====================
 class MouvementsHandler(BaseHandler):
     def get(self):
         bd = connexion()
@@ -212,7 +208,6 @@ class MouvementsHandler(BaseHandler):
         self.envoyer_json(mouvement)
 
 
-# ==================== Lancement ====================
 def creer_application():
     # Le dossier dashboard est à côté du dossier backend
     dossier_backend = os.path.dirname(os.path.abspath(__file__))

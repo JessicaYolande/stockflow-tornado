@@ -10,10 +10,8 @@ from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 
-# Adresse de l'API (le serveur Tornado)
 URL_API = "http://127.0.0.1:8000"
 
-# Les couleurs (R, V, B, opacité)
 FOND = (0.06, 0.09, 0.16, 1)
 CARTE = (0.12, 0.16, 0.25, 1)
 BLEU = (0.23, 0.51, 0.96, 1)
@@ -28,7 +26,6 @@ Window.clearcolor = FOND
 
 
 class Carte(BoxLayout):
-    """Un bloc avec un fond de couleur et des coins arrondis."""
 
     def __init__(self, couleur=CARTE, rayon=14, **kwargs):
         super().__init__(**kwargs)
@@ -43,7 +40,6 @@ class Carte(BoxLayout):
 
 
 class BoutonRond(Button):
-    """Un bouton coloré avec des coins arrondis."""
 
     def __init__(self, couleur=BLEU, **kwargs):
         super().__init__(
@@ -63,14 +59,12 @@ class BoutonRond(Button):
 
 
 def texte_gauche(texte, **kwargs):
-    """Un Label dont le texte est aligné à gauche."""
     label = Label(text=texte, halign="left", valign="middle", **kwargs)
     label.bind(size=label.setter("text_size"))
     return label
 
 
 def creer_stat(titre, couleur):
-    """Crée une petite carte de statistique. Retourne la carte et le label du chiffre."""
     carte = Carte(orientation="vertical", padding=10)
     chiffre = Label(text="0", font_size=26, bold=True, color=couleur)
     carte.add_widget(chiffre)
@@ -79,7 +73,6 @@ def creer_stat(titre, couleur):
 
 
 def ajouter_champ(contenu, titre, champ):
-    """Ajoute un petit titre puis un champ de saisie dans une fenêtre."""
     contenu.add_widget(texte_gauche(titre, size_hint_y=None, height=20,
                                     font_size=12, color=GRIS_CLAIR))
     champ.size_hint_y = None
@@ -92,14 +85,12 @@ class EcranProduits(BoxLayout):
         super().__init__(orientation="vertical", padding=14, spacing=10, **kwargs)
         self.produits = []
 
-        # ----- Titre -----
         entete = BoxLayout(orientation="vertical", size_hint_y=None, height=60)
         entete.add_widget(texte_gauche("StockFlow", font_size=28, bold=True, color=BLANC))
         entete.add_widget(texte_gauche("Gestion des stocks et approvisionnements",
                                        font_size=12, color=GRIS_CLAIR))
         self.add_widget(entete)
 
-        # ----- Les 3 cartes de statistiques -----
         stats = BoxLayout(size_hint_y=None, height=80, spacing=10)
         carte1, self.stat_total = creer_stat("Produits", BLEU)
         carte2, self.stat_faible = creer_stat("Stock faible", ROUGE)
@@ -109,20 +100,17 @@ class EcranProduits(BoxLayout):
         stats.add_widget(carte3)
         self.add_widget(stats)
 
-        # ----- Barre de recherche -----
         self.recherche = TextInput(hint_text="Rechercher un produit...", multiline=False,
                                    size_hint_y=None, height=42)
         self.recherche.bind(text=self.sur_recherche)
         self.add_widget(self.recherche)
 
-        # ----- Liste des produits (avec défilement) -----
         defilement = ScrollView()
         self.liste = GridLayout(cols=1, spacing=8, size_hint_y=None)
         self.liste.bind(minimum_height=self.liste.setter("height"))
         defilement.add_widget(self.liste)
         self.add_widget(defilement)
 
-        # ----- Boutons du bas -----
         boutons = BoxLayout(size_hint_y=None, height=48, spacing=8)
 
         btn_ajout = BoutonRond(text="Ajouter un produit", couleur=BLEU)
@@ -143,12 +131,9 @@ class EcranProduits(BoxLayout):
 
         self.add_widget(boutons)
 
-        # On charge les produits au démarrage
         self.charger_produits()
 
-    # ==================== Affichage ====================
     def charger_produits(self, *args):
-        """Récupère les produits depuis l'API."""
         try:
             reponse = requests.get(URL_API + "/products/", timeout=5)
             self.produits = reponse.json()
@@ -164,7 +149,6 @@ class EcranProduits(BoxLayout):
         self.afficher_produits()
 
     def afficher_produits(self):
-        # Mise à jour des statistiques
         total = len(self.produits)
         nb_faibles = 0
         valeur_stock = 0
@@ -177,7 +161,6 @@ class EcranProduits(BoxLayout):
         self.stat_faible.text = str(nb_faibles)
         self.stat_valeur.text = f"{valeur_stock:,.0f}".replace(",", " ")
 
-        # Affichage de la liste (filtrée par la recherche)
         mot = self.recherche.text.strip().lower()
         self.liste.clear_widgets()
         for p in self.produits:
@@ -186,13 +169,11 @@ class EcranProduits(BoxLayout):
             self.liste.add_widget(self.creer_ligne(p))
 
     def creer_ligne(self, p):
-        """Crée la carte d'un produit."""
         en_faible = p["quantity"] <= p["min_quantity"]
         couleur = ROUGE if en_faible else VERT
 
         ligne = Carte(orientation="horizontal", size_hint_y=None, height=70,
                       padding=12, spacing=10)
-        # Un clic sur la carte ouvre la fenêtre de modification
         ligne.bind(on_touch_down=lambda inst, touch, prod=p: self.sur_clic_ligne(inst, touch, prod))
 
         infos = BoxLayout(orientation="vertical")
@@ -214,7 +195,6 @@ class EcranProduits(BoxLayout):
         return ligne
 
     def sur_clic_ligne(self, ligne, touch, produit):
-        # On vérifie que le clic est bien sur cette carte (clic gauche, pas le scroll)
         if not ligne.collide_point(*touch.pos):
             return
         if getattr(touch, "is_mouse_scrolling", False):
@@ -283,7 +263,6 @@ class EcranProduits(BoxLayout):
         else:
             self.ajout_message.text = reponse.json().get("detail", "Erreur")
 
-    # ==================== Modifier / supprimer ====================
     def ouvrir_modification(self, produit):
         contenu = BoxLayout(orientation="vertical", padding=10, spacing=6)
 
@@ -358,7 +337,6 @@ class EcranProduits(BoxLayout):
         else:
             self.modif_message.text = reponse.json().get("detail", "Erreur")
 
-    # ==================== Mouvement de stock ====================
     def ouvrir_mouvement(self, *args):
         contenu = BoxLayout(orientation="vertical", padding=10, spacing=6)
 
@@ -394,7 +372,6 @@ class EcranProduits(BoxLayout):
             self.mvt_message.text = "La référence et la quantité sont obligatoires"
             return
 
-        # On cherche le produit qui a cette référence
         produit_trouve = None
         for p in self.produits:
             if p["reference"] == ref:
@@ -421,7 +398,6 @@ class EcranProduits(BoxLayout):
         else:
             self.mvt_message.text = reponse.json().get("detail", "Erreur")
 
-    # ==================== Historique ====================
     def ouvrir_historique(self, *args):
         contenu = BoxLayout(orientation="vertical", padding=10, spacing=10)
 
@@ -434,7 +410,6 @@ class EcranProduits(BoxLayout):
         btn_fermer = BoutonRond(text="Fermer", couleur=GRIS, size_hint_y=None, height=48)
         contenu.add_widget(btn_fermer)
 
-        # On récupère les mouvements depuis l'API
         try:
             mouvements = requests.get(URL_API + "/movements/", timeout=5).json()
         except requests.exceptions.RequestException:
@@ -442,7 +417,6 @@ class EcranProduits(BoxLayout):
             liste.add_widget(Label(text="Impossible de joindre l'API",
                                    size_hint_y=None, height=40, color=ROUGE))
 
-        # Dictionnaire id -> nom pour afficher le nom du produit
         noms = {}
         for p in self.produits:
             noms[p["id"]] = p["name"]
