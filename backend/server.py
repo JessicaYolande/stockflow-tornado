@@ -214,10 +214,16 @@ class MouvementsHandler(BaseHandler):
 
 # ==================== Lancement ====================
 def creer_application():
+    # Le dossier dashboard est à côté du dossier backend
+    dossier_backend = os.path.dirname(os.path.abspath(__file__))
+    dossier_dashboard = os.path.join(os.path.dirname(dossier_backend), "dashboard")
+
     return tornado.web.Application([
         (r"/products/?", ProduitsHandler),
         (r"/products/(\d+)/?", ProduitHandler),
         (r"/movements/?", MouvementsHandler),
+        (r"/dashboard/(.*)", tornado.web.StaticFileHandler,
+         {"path": dossier_dashboard, "default_filename": "index.html"}),
     ])
 
 

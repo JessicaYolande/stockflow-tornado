@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>StockFlow - Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+        h1 { color: #2c3e50; }
+        .stats { display: flex; gap: 15px; margin-bottom: 20px; }
+        .carte { background: white; padding: 15px; border-radius: 8px; flex: 1; text-align: center; }
+        .carte .nombre { font-size: 28px; font-weight: bold; color: #2980b9; }
+        table { width: 100%; background: white; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #2c3e50; color: white; }
+        .faible { color: #c0392b; font-weight: bold; }
+        button { padding: 8px 16px; margin-bottom: 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>StockFlow - Tableau de bord</h1>
+    <button onclick="charger()">Actualiser</button>
+
+    <div class="stats">
+        <div class="carte"><div class="nombre" id="stat_total">0</div>Produits</div>
+        <div class="carte"><div class="nombre" id="stat_faibles">0</div>Stock faible</div>
+        <div class="carte"><div class="nombre" id="stat_valeur">0</div>Valeur du stock</div>
+        <div class="carte"><div class="nombre" id="stat_mouvements">0</div>Mouvements</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Référence</th>
+                <th>Nom</th>
+                <th>Quantité</th>
+                <th>Minimum</th>
+                <th>Prix de vente</th>
+            </tr>
+        </thead>
+        <tbody id="tableau"></tbody>
+    </table>
+
+    <script>
+        async function charger() {
+            var produits = await fetch("/products/").then(function (r) { return r.json(); });
+            var mouvements = await fetch("/movements/").then(function (r) { return r.json(); });
+
+            var nbFaibles = 0;
+            var valeurStock = 0;
+            var lignes = "";
+
+            for (var i = 0; i < produits.length; i++) {
+                var p = produits[i];
+                var classe = "";
+                if (p.quantity <= p.min_quantity) {
+                    nbFaibles = nbFaibles + 1;
+                    classe = "faible";
+                }
+                valeurStock = valeurStock + p.quantity * p.purchase_price;
+
+                lignes = lignes + "<tr>" +
+                    "<td>" + p.reference + "</td>" +
+                    "<td>" + p.name + "</td>" +
+                    "<td class='" + classe + "'>" + p.quantity + "</td>" +
+                    "<td>" + p.min_quantity + "</td>" +
+                    "<td>" + p.selling_price + "</td>" +
+                    "</tr>";
+            }
+
+            document.getElementById("tableau").innerHTML = lignes;
+            document.getElementById("stat_total").textContent = produits.length;
+            document.getElementById("stat_faibles").textContent = nbFaibles;
+            document.getElementById("stat_valeur").textContent = valeurStock;
+            document.getElementById("stat_mouvements").textContent = mouvements.length;
+        }
+
+        charger();
+    </script>
+</body>
+</html>
